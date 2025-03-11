@@ -64,9 +64,6 @@ func (p *productController) GetProductDetail(ctx *gin.Context) {
 			ctx.AbortWithStatusJSON(http.StatusNotFound, res)
 			return
 		}
-		res := utils.ReturnResponseError(500, err.Error())
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, res)
-		return
 	}
 	res := utils.ReturnResponseSuccess(200, dto.MESSAGE_SUCCESS_GET_PRODUCT_DETAIL, product)
 	ctx.JSON(http.StatusOK, res)
@@ -74,7 +71,8 @@ func (p *productController) GetProductDetail(ctx *gin.Context) {
 
 func (p *productController) SearchProduct(ctx *gin.Context) {
 	var req dto.SearchProductQuery
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	ctx.ShouldBindQuery(&req)
+	if req.BarcodeId == nil && req.Title == nil {
 		res := utils.ReturnResponseError(400, dto.ErrBadrequest.Error())
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
 		return
@@ -84,11 +82,6 @@ func (p *productController) SearchProduct(ctx *gin.Context) {
 		if err == dto.ErrProductsNotFound {
 			res := utils.ReturnResponseError(404, err.Error())
 			ctx.AbortWithStatusJSON(http.StatusNotFound, res)
-			return
-		}
-		if err == dto.ErrNoQuerySearch {
-			res := utils.ReturnResponseError(400, err.Error())
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
 			return
 		}
 		res := utils.ReturnResponseError(500, err.Error())
@@ -139,11 +132,7 @@ func (p *productController) UpdateProduct(ctx *gin.Context) {
 		return
 	}
 	var req dto.UpdateProductRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		res := utils.ReturnResponseError(400, dto.ErrBadrequest.Error())
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
-		return
-	}
+	ctx.ShouldBind(&req)
 	err := p.productService.UpdateProductService(barcodeId.BarcodeId, req)
 	if err != nil {
 		if err == dto.ErrProductDoesntExist {

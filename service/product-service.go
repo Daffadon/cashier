@@ -96,9 +96,6 @@ func (p *productService) GetProductDetailService(barcodeId *string) (dto.Product
 }
 
 func (p *productService) SearchProductService(req *dto.SearchProductQuery) ([]dto.ProductWithoutTimeStamp, error) {
-	if req.BarcodeId == nil && req.Title == nil {
-		return []dto.ProductWithoutTimeStamp{}, dto.ErrNoQuerySearch
-	}
 	products, err := p.producRepository.RetrieveProductForSearch(req)
 	if err != nil {
 		return []dto.ProductWithoutTimeStamp{}, err

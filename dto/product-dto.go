@@ -16,7 +16,6 @@ var (
 	ErrProductExist       = errors.New("Product with this barcode already Exist")
 	ErrProductDoesntExist = errors.New("Product with this barcode doesn't exist")
 	ErrNoChangesRequest   = errors.New("There is no updated field in the request")
-	ErrNoQuerySearch      = errors.New("There is no barcode or name")
 
 	MESSAGE_SUCCESS_GET_ALL_PRODUCTS   = "Success Get All product"
 	MESSAGE_SUCCESS_GET_PRODUCT_DETAIL = "Success Get Product Detail"
