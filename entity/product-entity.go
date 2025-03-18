@@ -7,7 +7,7 @@ import (
 
 type Product struct {
 	gorm.Model
-	BarcodeId   string `gorm:"unique"`
+	BarcodeId   string `gorm:"uniqueIndex"`
 	Image       string
 	Title       string
 	Price       decimal.Decimal
