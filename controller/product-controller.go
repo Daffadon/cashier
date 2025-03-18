@@ -2,7 +2,6 @@ package controller
 
 import (
 	"net/http"
-	"tiga-putra-cashier-be/constant"
 	"tiga-putra-cashier-be/dto"
 	"tiga-putra-cashier-be/service"
 	"tiga-putra-cashier-be/utils"
@@ -71,7 +70,7 @@ func (p *productController) GetProductDetail(ctx *gin.Context) {
 
 func (p *productController) SearchProduct(ctx *gin.Context) {
 	var req dto.SearchProductQuery
-	ctx.ShouldBindQuery(&req)
+	_ = ctx.ShouldBindQuery(&req)
 	if req.BarcodeId == nil && req.Title == nil {
 		res := utils.ReturnResponseError(400, dto.ErrBadrequest.Error())
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
@@ -99,18 +98,17 @@ func (p *productController) AddProduct(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
 		return
 	}
-	if req.Image.Size > constant.MaxUploadSize {
-		res := utils.ReturnResponseError(400, dto.ErrLimitSizeExceeded.Error())
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
-		return
-	}
-	ext := utils.GetFileNameExtension(req.Image.Filename)
-	if ext != "jpg" && ext != "jpeg" && ext != "png" {
-		res := utils.ReturnResponseError(400, dto.ErrWrongFileExtension.Error())
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
-		return
-	}
 	if err := p.productService.CreateProductService(req); err != nil {
+		if err == dto.ErrWrongFileExtension {
+			res := utils.ReturnResponseError(400, err.Error())
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+			return
+		}
+		if err == dto.ErrLimitSizeExceeded {
+			res := utils.ReturnResponseError(400, err.Error())
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+			return
+		}
 		if err == dto.ErrProductExist {
 			res := utils.ReturnResponseError(409, err.Error())
 			ctx.AbortWithStatusJSON(http.StatusConflict, res)
@@ -132,7 +130,7 @@ func (p *productController) UpdateProduct(ctx *gin.Context) {
 		return
 	}
 	var req dto.UpdateProductRequest
-	ctx.ShouldBind(&req)
+	_ = ctx.ShouldBind(&req)
 	err := p.productService.UpdateProductService(barcodeId.BarcodeId, req)
 	if err != nil {
 		if err == dto.ErrProductDoesntExist {
