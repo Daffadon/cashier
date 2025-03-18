@@ -7,10 +7,20 @@ import (
 	"gorm.io/gorm"
 )
 
-func Migrate(db *gorm.DB) {
+func MigrateUp(db *gorm.DB) error {
 	err := db.AutoMigrate(&entity.Product{})
 	if err != nil {
-		panic(err)
+		log.Println("Migration has been processed")
+		return err
 	}
-	log.Println("Migration has been processed")
+	return nil
+}
+
+func MigrateDown(db *gorm.DB) error {
+	err := db.Migrator().DropTable(&entity.Product{})
+	if err != nil {
+		log.Println("Migration has been rolled back")
+		return err
+	}
+	return nil
 }
