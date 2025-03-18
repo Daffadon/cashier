@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"tiga-putra-cashier-be/dto"
 	"tiga-putra-cashier-be/entity"
 	"tiga-putra-cashier-be/utils"
@@ -49,7 +48,7 @@ func (p *productRepository) RetrieveProductsRepository(limit, offset uint16) ([]
 	var allProducts []entity.Product
 	err := p.db.WithContext(ctx).Scopes(utils.Paginate(limit, offset)).Find(&allProducts).Error
 	if err != nil {
-		return []entity.Product{}, dto.ErrProductsNotFound
+		return []entity.Product{}, dto.ErrISEProducts
 	}
 	return allProducts, nil
 }
@@ -61,9 +60,6 @@ func (p *productRepository) RetrieveProductByBarcodeId(barcodeId *string) (dto.P
 	var product dto.ProductWithoutTimeStamp
 	err := p.db.WithContext(ctx).Model(&entity.Product{}).Where("barcode_id = ?", *barcodeId).First(&product).Error
 	if err != nil {
-		if err.Error() == "record not found" {
-			return dto.ProductWithoutTimeStamp{}, false
-		}
 		return dto.ProductWithoutTimeStamp{}, false
 	}
 	return product, true
@@ -98,12 +94,8 @@ func (p *productRepository) RetrieveDeletedProductByBarcodeId(barcodeId *string)
 	var product dto.ProductWithoutTimeStamp
 	err := p.db.WithContext(ctx).Unscoped().Model(&entity.Product{}).Where("barcode_id = ? AND deleted_at IS NOT NULL", *barcodeId).First(&product).Error
 	if err != nil {
-		if err.Error() == "record not found" {
-			return dto.ProductWithoutTimeStamp{}, false
-		}
 		return dto.ProductWithoutTimeStamp{}, false
 	}
-	fmt.Print(product)
 	return product, true
 }
 
@@ -133,7 +125,6 @@ func (p *productRepository) UpdateDeletedProductRepository(barcodeId *string) er
 	defer cancel()
 	err := p.db.WithContext(ctx).Unscoped().Model(&entity.Product{}).Where("barcode_id = ?", *barcodeId).Update("deleted_at", nil).Error
 	if err != nil {
-		fmt.Print(err.Error())
 		return err
 	}
 	return nil
@@ -142,9 +133,9 @@ func (p *productRepository) UpdateDeletedProductRepository(barcodeId *string) er
 func (p *productRepository) DeleteProductRepository(barcodeId *string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	err := p.db.WithContext(ctx).Where("barcode_id = ?", barcodeId).Delete(&entity.Product{})
+	err := p.db.WithContext(ctx).Where("barcode_id = ?", barcodeId).Delete(&entity.Product{}).Error
 	if err != nil {
-		return err.Error
+		return err
 	}
 	return nil
 }
