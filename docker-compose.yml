@@ -1,26 +1,38 @@
 version: "3"
 
 services:
+  app:
+    container_name: app-cashier
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    restart: always
+    volumes:
+      - /tmp/cashier-assets:/app/assets
+
   db:
+    container_name: db-cashier
     image: postgres:latest
     environment:
       POSTGRES_USER: user-name
       POSTGRES_HOST: localhost
       POSTGRES_PASSWORD: password
       POSTGRES_DB: cashier
-    restart: "always"
-    ports:
-      - "5432:5432"
+    restart: always
     volumes:
       - /tmp/db-data:/var/lib/postgresql/data
 
   pgadmin:
+    container_name: admin-cashier
     image: dpage/pgadmin4:latest
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "8081:80"
-    restart: "always"
+    restart: always
     depends_on:
       - db
