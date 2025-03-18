@@ -29,10 +29,13 @@ func TestAddProduct_Success(t *testing.T) {
 	_ = formWriter.WriteField("description", "desc-1")
 
 	fileWriter, _ := formWriter.CreateFormFile("image", "test.jpg")
-	fileWriter.Write([]byte("fake image data"))
+	_, err := fileWriter.Write([]byte("fake image data"))
+	if err != nil {
+		t.Fatalf("Failed to write to file: %v", err)
+	}
 	formWriter.Close()
 
-	request := httptest.NewRequest("POST", "/v1/product", reqBody)
+	request := httptest.NewRequest(http.MethodPost, "/v1/product", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()
@@ -68,10 +71,13 @@ func TestAddProduct_BadRequestMissing(t *testing.T) {
 	_ = formWriter.WriteField("price", "1000")
 
 	fileWriter, _ := formWriter.CreateFormFile("image", "test.jpg")
-	fileWriter.Write([]byte("fake image data"))
+	_, err := fileWriter.Write([]byte("fake image data"))
+	if err != nil {
+		t.Fatalf("Failed to write to file: %v", err)
+	}
 	formWriter.Close()
 
-	request := httptest.NewRequest("POST", "/v1/product", reqBody)
+	request := httptest.NewRequest(http.MethodPost, "/v1/product", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()
@@ -99,15 +105,26 @@ func TestAddProduct_BadRequestOverSize(t *testing.T) {
 
 	fileWriter, _ := formWriter.CreateFormFile("image", "test.jpg")
 	largeData := make([]byte, 7*1024*1024) // 7MB
-	fileWriter.Write(largeData)
+	_, err := fileWriter.Write(largeData)
+	if err != nil {
+		t.Fatalf("Failed to write to file: %v", err)
+	}
 	formWriter.Close()
 
-	request := httptest.NewRequest("POST", "/v1/product", reqBody)
+	request := httptest.NewRequest(http.MethodPost, "/v1/product", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = request
+
+	mockService.On("CreateProductService", mock.MatchedBy(func(req dto.AddProductRequest) bool {
+		return req.BarcodeId == "1" &&
+			req.Title == "title-1" &&
+			req.Price.Equal(decimal.NewFromInt(1000)) &&
+			req.Description == "desc-1" &&
+			req.Image.Filename == "test.jpg"
+	})).Return(dto.ErrLimitSizeExceeded)
 
 	pc := controller.NewProductController(mockService)
 	pc.AddProduct(ctx)
@@ -115,6 +132,7 @@ func TestAddProduct_BadRequestOverSize(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Contains(t, w.Body.String(), "400")
 	assert.Contains(t, w.Body.String(), dto.ErrLimitSizeExceeded.Error())
+	mockService.AssertExpectations(t)
 }
 
 func TestAddProduct_BadRequestWrongExtension(t *testing.T) {
@@ -129,15 +147,26 @@ func TestAddProduct_BadRequestWrongExtension(t *testing.T) {
 	_ = formWriter.WriteField("description", "desc-1")
 
 	fileWriter, _ := formWriter.CreateFormFile("image", "test.webp")
-	fileWriter.Write([]byte("fake image data"))
+	_, err := fileWriter.Write([]byte("fake image data"))
+	if err != nil {
+		t.Fatalf("Failed to write to file: %v", err)
+	}
 	formWriter.Close()
 
-	request := httptest.NewRequest("POST", "/v1/product", reqBody)
+	request := httptest.NewRequest(http.MethodPost, "/v1/product", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = request
+
+	mockService.On("CreateProductService", mock.MatchedBy(func(req dto.AddProductRequest) bool {
+		return req.BarcodeId == "1" &&
+			req.Title == "title-1" &&
+			req.Price.Equal(decimal.NewFromInt(1000)) &&
+			req.Description == "desc-1" &&
+			req.Image.Filename == "test.webp"
+	})).Return(dto.ErrWrongFileExtension)
 
 	pc := controller.NewProductController(mockService)
 	pc.AddProduct(ctx)
@@ -145,6 +174,7 @@ func TestAddProduct_BadRequestWrongExtension(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Contains(t, w.Body.String(), "400")
 	assert.Contains(t, w.Body.String(), dto.ErrWrongFileExtension.Error())
+	mockService.AssertExpectations(t)
 }
 
 func TestAddProduct_Conflict(t *testing.T) {
@@ -159,10 +189,13 @@ func TestAddProduct_Conflict(t *testing.T) {
 	_ = formWriter.WriteField("description", "desc-1")
 
 	fileWriter, _ := formWriter.CreateFormFile("image", "test.jpg")
-	fileWriter.Write([]byte("fake image data"))
+	_, err := fileWriter.Write([]byte("fake image data"))
+	if err != nil {
+		t.Fatalf("Failed to write to file: %v", err)
+	}
 	formWriter.Close()
 
-	request := httptest.NewRequest("POST", "/v1/product", reqBody)
+	request := httptest.NewRequest(http.MethodPost, "/v1/product", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()
@@ -183,7 +216,6 @@ func TestAddProduct_Conflict(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, w.Code)
 	assert.Contains(t, w.Body.String(), "409")
 	assert.Contains(t, w.Body.String(), dto.ErrProductExist.Error())
-
 	mockService.AssertExpectations(t)
 }
 
@@ -199,10 +231,13 @@ func TestAddProduct_ISE(t *testing.T) {
 	_ = formWriter.WriteField("description", "desc-1")
 
 	fileWriter, _ := formWriter.CreateFormFile("image", "test.jpg")
-	fileWriter.Write([]byte("fake image data"))
+	_, err := fileWriter.Write([]byte("fake image data"))
+	if err != nil {
+		t.Fatalf("Failed to write to file: %v", err)
+	}
 	formWriter.Close()
 
-	request := httptest.NewRequest("POST", "/v1/product", reqBody)
+	request := httptest.NewRequest(http.MethodPost, "/v1/product", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()

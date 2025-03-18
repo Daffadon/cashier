@@ -25,7 +25,7 @@ func TestUpdateProduct_Success(t *testing.T) {
 	_ = formWriter.WriteField("title", "title-2")
 	formWriter.Close()
 
-	request := httptest.NewRequest("PATCH", "/v1/product/1", reqBody)
+	request := httptest.NewRequest(http.MethodPatch, "/v1/product/1", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()
@@ -56,7 +56,7 @@ func TestUpdateProduct_BadRequestURI(t *testing.T) {
 	_ = formWriter.WriteField("title", "title-2")
 	formWriter.Close()
 
-	request := httptest.NewRequest("PATCH", "/v1/product/1", reqBody)
+	request := httptest.NewRequest(http.MethodPatch, "/v1/product/1", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()
@@ -81,7 +81,7 @@ func TestUpdateProduct_BadRequestBody(t *testing.T) {
 	formWriter := multipart.NewWriter(reqBody)
 	formWriter.Close()
 
-	request := httptest.NewRequest("PATCH", "/v1/product/1", reqBody)
+	request := httptest.NewRequest(http.MethodPatch, "/v1/product/1", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()
@@ -107,7 +107,7 @@ func TestUpdateProduct_NotFound(t *testing.T) {
 	_ = formWriter.WriteField("title", "title-2")
 	formWriter.Close()
 
-	request := httptest.NewRequest("PATCH", "/v1/product/1", reqBody)
+	request := httptest.NewRequest(http.MethodPatch, "/v1/product/1", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()
@@ -138,7 +138,7 @@ func TestUpdateProduct_ISE(t *testing.T) {
 	_ = formWriter.WriteField("title", "title-2")
 	formWriter.Close()
 
-	request := httptest.NewRequest("PATCH", "/v1/product/1", reqBody)
+	request := httptest.NewRequest(http.MethodPatch, "/v1/product/1", reqBody)
 	request.Header.Set("Content-Type", formWriter.FormDataContentType())
 
 	w := httptest.NewRecorder()

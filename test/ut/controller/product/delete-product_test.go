@@ -20,7 +20,7 @@ func TestDeleteProduct_Success(t *testing.T) {
 	barcodeId := "1"
 	mockService.On("DeleteProductService", &barcodeId).Return(nil)
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("DELETE", "/v1/product/1", nil)
+	req, _ := http.NewRequest(http.MethodDelete, "/v1/product/1", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req
@@ -38,7 +38,7 @@ func TestDeleteProduct_BadRequest(t *testing.T) {
 	mockService := new(test.MockProductService)
 
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("DELETE", "/v1/product/1", nil)
+	req, _ := http.NewRequest(http.MethodDelete, "/v1/product/1", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req
@@ -56,7 +56,7 @@ func TestDeleteProduct_NotFound(t *testing.T) {
 	barcodeId := "1"
 	mockService.On("DeleteProductService", &barcodeId).Return(dto.ErrProductDoesntExist)
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("DELETE", "/v1/product/1", nil)
+	req, _ := http.NewRequest(http.MethodDelete, "/v1/product/1", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req
@@ -76,7 +76,7 @@ func TestDeleteProduct_ISE(t *testing.T) {
 	barcodeId := "1"
 	mockService.On("DeleteProductService", &barcodeId).Return(errors.New("ISE"))
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("DELETE", "/v1/product/1", nil)
+	req, _ := http.NewRequest(http.MethodDelete, "/v1/product/1", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req

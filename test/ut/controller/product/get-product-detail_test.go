@@ -29,7 +29,7 @@ func TestGetProductDetail_Success(t *testing.T) {
 	}
 	mockService.On("GetProductDetailService", &barcodeId).Return(product, nil)
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("GET", "/v1/product/1", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/v1/product/1", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req
@@ -54,7 +54,7 @@ func TestGetProductDetail_BadRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	mockService := new(test.MockProductService)
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("GET", "/v1/product", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/v1/product", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req
@@ -72,7 +72,7 @@ func TestGetProductDetail_NotFound(t *testing.T) {
 
 	barcodeId := "1"
 	mockService.On("GetProductDetailService", &barcodeId).Return(dto.ProductWithoutTimeStamp{}, dto.ErrProductDoesntExist)
-	req, _ := http.NewRequest("GET", "/v1/product/1", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/v1/product/1", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req

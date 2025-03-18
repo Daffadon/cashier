@@ -45,7 +45,7 @@ func TestSearchProduct_Success(t *testing.T) {
 	}
 	mockService.On("SearchProductService", &reqQuery).Return(products, nil)
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("GET", "/v1/product/search?title=title-1", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/v1/product/search?title=title-1", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req
@@ -66,7 +66,7 @@ func TestSearchProduct_BadRequestNoQuery(t *testing.T) {
 	mockService := new(test.MockProductService)
 
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("GET", "/v1/product/search", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/v1/product/search", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req
@@ -76,6 +76,7 @@ func TestSearchProduct_BadRequestNoQuery(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "400")
 	assert.Contains(t, w.Body.String(), dto.ErrBadrequest.Error())
 }
+
 
 func TestSearchProduct_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -88,7 +89,7 @@ func TestSearchProduct_NotFound(t *testing.T) {
 
 	mockService.On("SearchProductService", &reqQuery).Return([]dto.ProductWithoutTimeStamp{}, dto.ErrProductsNotFound)
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("GET", "/v1/product/search?title=title-1", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/v1/product/search?title=title-1", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req
@@ -111,7 +112,7 @@ func TestSearchProduct_ISE(t *testing.T) {
 
 	mockService.On("SearchProductService", &reqQuery).Return([]dto.ProductWithoutTimeStamp{}, errors.New("ISE"))
 	pc := controller.NewProductController(mockService)
-	req, _ := http.NewRequest("GET", "/v1/product/search?title=title-1", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/v1/product/search?title=title-1", nil)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	ctx.Request = req
