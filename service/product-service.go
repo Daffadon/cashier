@@ -8,8 +8,6 @@ import (
 	"tiga-putra-cashier-be/entity"
 	"tiga-putra-cashier-be/repository"
 	"tiga-putra-cashier-be/utils"
-
-	"github.com/google/uuid"
 )
 
 type (
@@ -23,11 +21,15 @@ type (
 	}
 	productService struct {
 		producRepository repository.ProductRepository
+		fileManagement   utils.FileManagement
 	}
 )
 
-func NewProductService(productRepository repository.ProductRepository) ProductService {
-	return &productService{productRepository}
+func NewProductService(productRepository repository.ProductRepository, fileManagement utils.FileManagement) ProductService {
+	return &productService{
+		productRepository,
+		fileManagement,
+	}
 }
 
 func (p *productService) GetProductService(page *uint16) (dto.AllProductsWithPagination, error) {
@@ -119,23 +121,26 @@ func (p *productService) SearchProductService(req *dto.SearchProductQuery) ([]dt
 func (p *productService) CreateProductService(product dto.AddProductRequest) error {
 	_, ok := p.producRepository.RetrieveDeletedProductByBarcodeId(&product.BarcodeId)
 	if ok {
-		fmt.Println(ok)
 		if err := p.producRepository.UpdateDeletedProductRepository(&product.BarcodeId); err != nil {
 			return err
 		}
 		return nil
 	} else {
+		ext := p.fileManagement.GetFileNameExtension(product.Image.Filename)
+		if ext != "jpg" && ext != "jpeg" && ext != "png" {
+			return dto.ErrWrongFileExtension
+		}
+		if product.Image.Size > constant.MaxUploadSize {
+			return dto.ErrLimitSizeExceeded
+		}
 		_, ok := p.producRepository.RetrieveProductByBarcodeId(&product.BarcodeId)
 		if ok {
 			return dto.ErrProductExist
 		}
-		ext := utils.GetFileNameExtension(product.Image.Filename)
-		var newFileName = fmt.Sprintf("%s.%s", uuid.New().String(), ext)
-		if ext != "" {
-			pathDir := constant.ImageDir
-			if err := utils.UploadFile(product.Image, newFileName, pathDir); err != nil {
-				return err
-			}
+		var newFileName = p.fileManagement.GenerateNewFileName(ext)
+		pathDir := constant.ImageDir
+		if err := p.fileManagement.UploadFile(product.Image, newFileName, pathDir); err != nil {
+			return err
 		}
 		newProduct := entity.Product{
 			BarcodeId:   product.BarcodeId,
@@ -168,20 +173,24 @@ func (p *productService) UpdateProductService(barcodeId string, product dto.Upda
 	}
 
 	if product.Image != nil {
-		ext := utils.GetFileNameExtension(product.Image.Filename)
-		var newFileName = fmt.Sprintf("%s.%s", uuid.New().String(), ext)
-		if ext != "" {
-			pathDir := constant.ImageDir
-			if err := utils.UploadFile(product.Image, newFileName, pathDir); err != nil {
-				return err
-			}
-			pathDeletedImage := fmt.Sprintf("%s/%s", constant.ImageDir, productExist.Image)
-			err := utils.DeleteFile(pathDeletedImage)
-			if err != nil {
-				return err
-			}
-			updates["image"] = newFileName
+		ext := p.fileManagement.GetFileNameExtension(product.Image.Filename)
+		if ext != "jpg" && ext != "jpeg" && ext != "png" {
+			return dto.ErrWrongFileExtension
 		}
+		if product.Image.Size > constant.MaxUploadSize {
+			return dto.ErrLimitSizeExceeded
+		}
+		var newFileName = p.fileManagement.GenerateNewFileName(ext)
+		pathDir := constant.ImageDir
+		if err := p.fileManagement.UploadFile(product.Image, newFileName, pathDir); err != nil {
+			return err
+		}
+		pathDeletedImage := fmt.Sprintf("%s/%s", constant.ImageDir, productExist.Image)
+		err := p.fileManagement.DeleteFile(pathDeletedImage)
+		if err != nil {
+			return err
+		}
+		updates["image"] = newFileName
 	}
 	if len(updates) > 0 {
 		if err := p.producRepository.UpdateProductRepository(&barcodeId, &updates); err != nil {

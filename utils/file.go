@@ -8,15 +8,28 @@ import (
 	"path/filepath"
 	"strings"
 	"tiga-putra-cashier-be/dto"
+
+	"github.com/google/uuid"
 )
 
-func GetFileNameExtension(filename string) string {
+type FileManagement interface {
+	UploadFile(file *multipart.FileHeader, filename, path string) error
+	GetFileNameExtension(filename string) string
+	DeleteFile(pathFile string) error
+	GenerateNewFileName(ext string) string
+}
+type fileManagementUtils struct{}
+
+func FileInit() FileManagement {
+	return &fileManagementUtils{}
+}
+
+func (f *fileManagementUtils) GetFileNameExtension(filename string) string {
 	parts := strings.Split(filename, ".")
 	return strings.ToLower(parts[len(parts)-1])
 }
 
-func UploadFile(file *multipart.FileHeader, filename, path string) error {
-
+func (f *fileManagementUtils) UploadFile(file *multipart.FileHeader, filename, path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		if err := os.MkdirAll(path, 0750); err != nil {
 			return dto.ErrToSaveFile
@@ -42,9 +55,13 @@ func UploadFile(file *multipart.FileHeader, filename, path string) error {
 	return nil
 }
 
-func DeleteFile(pathFile string) error {
+func (f *fileManagementUtils) DeleteFile(pathFile string) error {
 	if err := os.Remove(pathFile); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (f *fileManagementUtils) GenerateNewFileName(ext string) string {
+	return fmt.Sprintf("%s.%s", uuid.New().String(), ext)
 }
